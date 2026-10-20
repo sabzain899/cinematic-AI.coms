@@ -1,0 +1,1650 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Tenses Learning Academy</title>
+<style>
+:root{--blue:#1457a6;--light:#edf5ff;--ink:#172b4d;--border:#d7e3f3}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f8fd;color:var(--ink);font-family:Arial,sans-serif;line-height:1.6}
+header{background:linear-gradient(135deg,#1457a6,#267bd1);color:white;padding:22px 16px;text-align:center}
+header h1{margin:0;font-size:clamp(22px,5vw,32px)}
+header p{margin:6px 0 0}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:12px;background:white;border-bottom:1px solid var(--border)}
+button,input,textarea{font:inherit}
+button{border:0;border-radius:10px;padding:11px 15px;background:var(--blue);color:white;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+button.secondary{background:#e6effb;color:#154b8b}
+main{width:min(100% - 24px,950px);margin:22px auto 40px}
+.card{background:white;border:1px solid var(--border);border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 5px 18px #173c6510}
+.card h2,.card h3{color:var(--blue);margin-top:0}
+.urdu{direction:rtl;text-align:right;font-size:1.08rem;background:#f5f9ff;border-radius:8px;padding:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.lesson-button{width:100%;height:100%;min-height:48px}
+input[type="search"],input[type="text"],textarea{width:100%;padding:12px;border:1px solid #b9cce5;border-radius:10px;margin:7px 0 12px;background:white;color:var(--ink)}
+.formula{background:var(--light);border-left:4px solid var(--blue);padding:12px;border-radius:8px;overflow-wrap:anywhere}
+.example-list li{margin:7px 0}
+.notice{padding:12px;border-radius:10px;background:#fff8df;color:#654b00}
+footer{text-align:center;color:#62748b;padding:18px}
+.hidden{display:none!important}
+@media(max-width:480px){main{width:calc(100% - 16px);margin-top:12px}.card{padding:14px}nav button{flex:1}}
+</style>
+</head>
+<body>
+<header>
+  <h1>English Tenses Learning Academy</h1>
+  <p>Learn English step by step • آسان اردو وضاحت کے ساتھ</p>
+</header>
+<nav id="mainNav">
+  <button class="secondary" onclick="goHome()">Home</button>
+  <button class="secondary" onclick="showTenses()">English Tenses</button>
+  <button class="secondary" onclick="showConditionals()">Conditional Sentences</button>
+  <button class="secondary" onclick="showIdentifier()">Tense Identifier</button>
+  <button class="secondary" onclick="showGrandTest()">Grand Test</button>
+  <button class="secondary" onclick="showWritingTest()">Tense Writing Test</button>
+  <button class="secondary" onclick="showMistakes()">Mistake Review</button>
+</nav>
+<main id="app" aria-live="polite"></main>
+<footer>English Tenses Learning Academy</footer>
+<script>
+"use strict";
+
+/* PART 1 ENDS HERE. PART 2 WILL CONTINUE INSIDE THIS SCRIPT. */
+
+const app = document.getElementById("app");
+let currentPage = "home";
+let searchText = "";
+let selectedTenseIndex = 0;
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+let mistakeReview = [];
+let conditionType = "Zero";
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[ch]);
+}
+
+const tenseData = [
+  {
+    name:"Present Simple", use:"Habits, routines and general truths.",
+    urdu:"روزمرہ عادات، معمولات اور عمومی حقائق کے لیے استعمال ہوتا ہے۔",
+    help:"do / does (negative and questions)", verb:"Base verb; he/she/it کے ساتھ s/es",
+    forms:{
+      positive:"Subject + base verb (s/es) + object + modifier",
+      negative:"Subject + do/does not + base verb + object + modifier",
+      question:"Do/Does + subject + base verb + object + modifier?"
+    },
+    examples:[
+      ["I play cricket.","I do not play cricket.","Do I play cricket?"],
+      ["She reads books.","She does not read books.","Does she read books?"],
+      ["They walk to school.","They do not walk to school.","Do they walk to school?"],
+      ["He drinks milk.","He does not drink milk.","Does he drink milk?"],
+      ["We study English.","We do not study English.","Do we study English?"]
+    ]
+  },
+  {
+    name:"Present Continuous", use:"Actions happening now or around now.",
+    urdu:"جو کام ابھی جاری ہو یا ان دنوں ہو رہا ہو۔",
+    help:"am / is / are", verb:"Verb + ing",
+    forms:{
+      positive:"Subject + am/is/are + verb-ing + object",
+      negative:"Subject + am/is/are + not + verb-ing + object",
+      question:"Am/Is/Are + subject + verb-ing + object?"
+    },
+    examples:[
+      ["I am reading a book.","I am not reading a book.","Am I reading a book?"],
+      ["She is cooking dinner.","She is not cooking dinner.","Is she cooking dinner?"],
+      ["They are playing outside.","They are not playing outside.","Are they playing outside?"],
+      ["He is writing a letter.","He is not writing a letter.","Is he writing a letter?"],
+      ["We are learning English.","We are not learning English.","Are we learning English?"]
+    ]
+  },
+  {
+    name:"Present Perfect", use:"Completed actions connected to the present.",
+    urdu:"ایسا کام جو مکمل ہو چکا ہو اور اس کا تعلق حال سے ہو۔",
+    help:"has / have", verb:"Past participle (V3)",
+    forms:{
+      positive:"Subject + has/have + V3 + object",
+      negative:"Subject + has/have + not + V3 + object",
+      question:"Has/Have + subject + V3 + object?"
+    },
+    examples:[
+      ["I have finished my work.","I have not finished my work.","Have I finished my work?"],
+      ["She has written a letter.","She has not written a letter.","Has she written a letter?"],
+      ["They have cleaned the room.","They have not cleaned the room.","Have they cleaned the room?"],
+      ["He has eaten lunch.","He has not eaten lunch.","Has he eaten lunch?"],
+      ["We have learned the lesson.","We have not learned the lesson.","Have we learned the lesson?"]
+    ]
+  },
+  {
+    name:"Present Perfect Continuous", use:"Actions continuing for a period up to now.",
+    urdu:"ایسا کام جو ماضی میں شروع ہوا اور اب تک جاری ہے۔",
+    help:"has/have been", verb:"Verb + ing",
+    forms:{
+      positive:"Subject + has/have been + verb-ing + since/for + time",
+      negative:"Subject + has/have not been + verb-ing + since/for + time",
+      question:"Has/Have + subject + been + verb-ing + since/for + time?"
+    },
+    examples:[
+      ["I have been studying for two hours.","I have not been studying for two hours.","Have I been studying for two hours?"],
+      ["She has been working since morning.","She has not been working since morning.","Has she been working since morning?"],
+      ["They have been playing for an hour.","They have not been playing for an hour.","Have they been playing for an hour?"],
+      ["He has been waiting since noon.","He has not been waiting since noon.","Has he been waiting since noon?"],
+      ["We have been learning for weeks.","We have not been learning for weeks.","Have we been learning for weeks?"]
+    ]
+  },
+  {
+    name:"Past Simple", use:"Completed actions in the past.",
+    urdu:"ماضی میں مکمل ہونے والے کام کے لیے۔",
+    help:"did (negative and questions)", verb:"Past form (V2); did کے بعد V1",
+    forms:{
+      positive:"Subject + V2 + object + modifier",
+      negative:"Subject + did not + V1 + object + modifier",
+      question:"Did + subject + V1 + object + modifier?"
+    },
+    examples:[
+      ["I played cricket yesterday.","I did not play cricket yesterday.","Did I play cricket yesterday?"],
+      ["She visited her aunt.","She did not visit her aunt.","Did she visit her aunt?"],
+      ["They watched a film.","They did not watch a film.","Did they watch a film?"],
+      ["He wrote a letter.","He did not write a letter.","Did he write a letter?"],
+      ["We went to school.","We did not go to school.","Did we go to school?"]
+    ]
+  },
+  {
+    name:"Past Continuous", use:"An action in progress at a past time.",
+    urdu:"ماضی کے کسی وقت جاری کام کے لیے۔",
+    help:"was / were", verb:"Verb + ing",
+    forms:{
+      positive:"Subject + was/were + verb-ing + object",
+      negative:"Subject + was/were + not + verb-ing + object",
+      question:"Was/Were + subject + verb-ing + object?"
+    },
+    examples:[
+      ["I was reading a book.","I was not reading a book.","Was I reading a book?"],
+      ["She was cooking dinner.","She was not cooking dinner.","Was she cooking dinner?"],
+      ["They were playing outside.","They were not playing outside.","Were they playing outside?"],
+      ["He was writing a letter.","He was not writing a letter.","Was he writing a letter?"],
+      ["We were studying English.","We were not studying English.","Were we studying English?"]
+    ]
+  },
+  {
+    name:"Past Perfect", use:"An action completed before another past action.",
+    urdu:"ماضی کے کسی دوسرے کام سے پہلے مکمل ہونے والا کام۔",
+    help:"had", verb:"Past participle (V3)",
+    forms:{
+      positive:"Subject + had + V3 + object",
+      negative:"Subject + had not + V3 + object",
+      question:"Had + subject + V3 + object?"
+    },
+    examples:[
+      ["I had finished my work.","I had not finished my work.","Had I finished my work?"],
+      ["She had left before noon.","She had not left before noon.","Had she left before noon?"],
+      ["They had eaten dinner.","They had not eaten dinner.","Had they eaten dinner?"],
+      ["He had written the letter.","He had not written the letter.","Had he written the letter?"],
+      ["We had reached home.","We had not reached home.","Had we reached home?"]
+    ]
+  },
+  {
+    name:"Past Perfect Continuous", use:"An action continuing up to a point in the past.",
+    urdu:"ماضی کے کسی وقت تک جاری رہنے والا کام۔",
+    help:"had been", verb:"Verb + ing",
+    forms:{
+      positive:"Subject + had been + verb-ing + since/for + time",
+      negative:"Subject + had not been + verb-ing + since/for + time",
+      question:"Had + subject + been + verb-ing + since/for + time?"
+    },
+    examples:[
+      ["I had been studying for two hours.","I had not been studying for two hours.","Had I been studying for two hours?"],
+      ["She had been working since morning.","She had not been working since morning.","Had she been working since morning?"],
+      ["They had been waiting for an hour.","They had not been waiting for an hour.","Had they been waiting for an hour?"],
+      ["He had been driving for hours.","He had not been driving for hours.","Had he been driving for hours?"],
+      ["We had been living there for years.","We had not been living there for years.","Had we been living there for years?"]
+    ]
+  },
+  {
+    name:"Future Simple", use:"Predictions, promises and future decisions.",
+    urdu:"مستقبل کے کام، وعدوں اور پیش گوئیوں کے لیے۔",
+    help:"will", verb:"Base verb (V1)",
+    forms:{
+      positive:"Subject + will + V1 + object",
+      negative:"Subject + will not + V1 + object",
+      question:"Will + subject + V1 + object?"
+    },
+    examples:[
+      ["I will call you tomorrow.","I will not call you tomorrow.","Will I call you tomorrow?"],
+      ["She will help her mother.","She will not help her mother.","Will she help her mother?"],
+      ["They will visit us.","They will not visit us.","Will they visit us?"],
+      ["He will finish the work.","He will not finish the work.","Will he finish the work?"],
+      ["We will learn English.","We will not learn English.","Will we learn English?"]
+    ]
+  },
+  {
+    name:"Future Continuous", use:"An action that will be in progress in the future.",
+    urdu:"مستقبل کے کسی وقت جاری ہونے والا کام۔",
+    help:"will be", verb:"Verb + ing",
+    forms:{
+      positive:"Subject + will be + verb-ing + object",
+      negative:"Subject + will not be + verb-ing + object",
+      question:"Will + subject + be + verb-ing + object?"
+    },
+    examples:[
+      ["I will be studying at eight.","I will not be studying at eight.","Will I be studying at eight?"],
+      ["She will be cooking dinner.","She will not be cooking dinner.","Will she be cooking dinner?"],
+      ["They will be travelling tomorrow.","They will not be travelling tomorrow.","Will they be travelling tomorrow?"],
+      ["He will be working tonight.","He will not be working tonight.","Will he be working tonight?"],
+      ["We will be waiting for you.","We will not be waiting for you.","Will we be waiting for you?"]
+    ]
+  },
+  {
+    name:"Future Perfect", use:"An action completed before a future time.",
+    urdu:"مستقبل کے کسی وقت تک مکمل ہو جانے والا کام۔",
+    help:"will have", verb:"Past participle (V3)",
+    forms:{
+      positive:"Subject + will have + V3 + object",
+      negative:"Subject + will not have + V3 + object",
+      question:"Will + subject + have + V3 + object?"
+    },
+    examples:[
+      ["I will have finished by noon.","I will not have finished by noon.","Will I have finished by noon?"],
+      ["She will have arrived by six.","She will not have arrived by six.","Will she have arrived by six?"],
+      ["They will have completed the task.","They will not have completed the task.","Will they have completed the task?"],
+      ["He will have written the report.","He will not have written the report.","Will he have written the report?"],
+      ["We will have reached home by then.","We will not have reached home by then.","Will we have reached home by then?"]
+    ]
+  },
+  {
+    name:"Future Perfect Continuous", use:"An action continuing up to a future point.",
+    urdu:"مستقبل کے کسی وقت تک جاری رہنے والا کام۔",
+    help:"will have been", verb:"Verb + ing",
+    forms:{
+      positive:"Subject + will have been + verb-ing + since/for + time",
+      negative:"Subject + will not have been + verb-ing + since/for + time",
+      question:"Will + subject + have been + verb-ing + since/for + time?"
+    },
+    examples:[
+      ["I will have been studying for two hours by noon.","I will not have been studying for two hours by noon.","Will I have been studying for two hours by noon?"],
+      ["She will have been working for a year by June.","She will not have been working for a year by June.","Will she have been working for a year by June?"],
+      ["They will have been travelling for a week by Friday.","They will not have been travelling for a week by Friday.","Will they have been travelling for a week by Friday?"],
+      ["He will have been waiting for an hour by six.","He will not have been waiting for an hour by six.","Will he have been waiting for an hour by six?"],
+      ["We will have been living here for ten years by May.","We will not have been living here for ten years by May.","Will we have been living here for ten years by May?"]
+    ]
+  }
+];
+
+function goHome() {
+  currentPage = "home";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function showTenses() {
+  currentPage = "tenses";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderHome() {
+  return `
+    <section class="card">
+      <h2>Welcome to English Tenses Learning Academy</h2>
+      <p>Learn all 12 English tenses with structures, examples, quizzes and Urdu explanations.</p>
+      <p class="urdu">تمام بارہ انگلش ٹینسز آسان اردو وضاحت اور مثالوں کے ساتھ سیکھیں۔</p>
+      <div class="grid">
+        <button onclick="showTenses()">English Tenses</button>
+        <button onclick="showConditionals()">Conditional Sentences</button>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Start Learning</h3>
+      <p>Choose a topic from the buttons above, or begin with the first tense.</p>
+      <button onclick="openTense(0)">Start Present Simple</button>
+    </section>
+  `;
+}
+
+function renderTenses() {
+  const filtered = tenseData.map((t, i) => ({t, i})).filter(({t}) => {
+    const all = [
+      t.name, t.use, t.urdu, t.help, t.verb,
+      t.forms.positive, t.forms.negative, t.forms.question,
+      ...t.examples.flat()
+    ].join(" ").toLowerCase();
+    return all.includes(searchText);
+  });
+
+  return `
+    <section class="card">
+      <h2>Choose a Tense</h2>
+      <label for="tenseSearch">Search tenses or example sentences</label>
+      <input id="tenseSearch" type="search"
+        placeholder="Search: Present Simple, playing..."
+        value="${escapeHTML(searchText)}"
+        oninput="updateTenseSearch(this.value)">
+      <div class="grid">
+        ${filtered.map(({t,i}) => `
+          <button class="lesson-button" onclick="openTense(${i})">
+            ${escapeHTML(t.name)}
+          </button>
+        `).join("")}
+      </div>
+      ${filtered.length ? "" : "<p>No matching tense found.</p>"}
+    </section>
+  `;
+}
+
+function updateTenseSearch(value) {
+  const cursor = document.getElementById("tenseSearch");
+  const start = cursor ? cursor.selectionStart : null;
+  searchText = String(value || "").toLowerCase();
+  renderApp();
+  const next = document.getElementById("tenseSearch");
+  if (next) {
+    next.focus();
+    if (start !== null) next.setSelectionRange(start, start);
+  }
+}
+
+function examplesHTML(title, exampleIndex) {
+  return `
+    <section class="card">
+      <h3>${escapeHTML(title)}</h3>
+      <ol class="example-list">
+        ${tenseData[selectedTenseIndex].examples.map(row =>
+          `<li>${escapeHTML(row[exampleIndex])}</li>`
+        ).join("")}
+      </ol>
+    </section>
+  `;
+}
+
+function renderLesson() {
+  const t = tenseData[selectedTenseIndex];
+  if (!t) return `<section class="card"><p>Tense not found.</p></section>`;
+
+  return `
+    <section class="card">
+      <button class="secondary" onclick="showTenses()">← All Tenses</button>
+      <h2>${escapeHTML(t.name)}</h2>
+      <h3>Definition / Use</h3>
+      <p>${escapeHTML(t.use)}</p>
+      <p class="urdu">${escapeHTML(t.urdu)}</p>
+      <h3>Helping Verb</h3>
+      <p>${escapeHTML(t.help)}</p>
+      <h3>Verb Form</h3>
+      <p>${escapeHTML(t.verb)}</p>
+      <h3>Positive Structure</h3>
+      <div class="formula">${escapeHTML(t.forms.positive)}</div>
+      <h3>Negative Structure</h3>
+      <div class="formula">${escapeHTML(t.forms.negative)}</div>
+      <h3>Interrogative Structure</h3>
+      <div class="formula">${escapeHTML(t.forms.question)}</div>
+      <p class="notice">Remember: the exact structure may vary with the subject and sentence meaning.</p>
+      <button onclick="startTenseQuiz()">Take 5-Question Quiz</button>
+    </section>
+    ${examplesHTML("Positive Examples", 0)}
+    ${examplesHTML("Negative Examples", 1)}
+    ${examplesHTML("Interrogative Examples", 2)}
+    <section class="card grid">
+      <button ${selectedTenseIndex === 0 ? "disabled" : ""}
+        onclick="openTense(${selectedTenseIndex - 1})">← Previous Tense</button>
+      <button ${selectedTenseIndex === 11 ? "disabled" : ""}
+        onclick="openTense(${selectedTenseIndex + 1})">Next Tense →</button>
+    </section>
+  `;
+}
+
+function openTense(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= tenseData.length) {
+    alert("Tense not found.");
+    return;
+  }
+  selectedTenseIndex = index;
+  currentPage = "lesson";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+const conditionalData = {
+  "Zero": {
+    definition: "Facts and results that are generally true.",
+    urdu: "عمومی حقائق اور ایسے نتائج جو عموماً درست ہوتے ہیں۔",
+    structure: "If + Present Simple, Present Simple",
+    possibility: "General truth",
+    examples: [
+      "If you heat ice, it melts.",
+      "If water reaches 100°C at sea level, it boils.",
+      "If plants do not get water, they dry out.",
+      "If you mix red and blue, you get purple.",
+      "If the sun sets, it gets dark."
+    ]
+  },
+  "First": {
+    definition: "A real or possible future situation.",
+    urdu: "مستقبل کی حقیقی یا ممکنہ صورتِ حال۔",
+    structure: "If + Present Simple, will + base verb",
+    possibility: "Real possibility",
+    examples: [
+      "If it rains, I will stay home.",
+      "If you study, you will improve.",
+      "If she calls, I will answer.",
+      "If we hurry, we will catch the bus.",
+      "If they invite me, I will attend."
+    ]
+  },
+  "Second": {
+    definition: "An imaginary or unlikely present/future situation.",
+    urdu: "حال یا مستقبل کی فرضی یا کم امکان والی صورتِ حال۔",
+    structure: "If + Past Simple, would + base verb",
+    possibility: "Imaginary or unlikely",
+    examples: [
+      "If I had more time, I would read more.",
+      "If she were here, she would help us.",
+      "If I won a prize, I would celebrate.",
+      "If he knew the answer, he would tell us.",
+      "If we lived near the sea, we would swim often."
+    ]
+  },
+  "Third": {
+    definition: "An imaginary past situation that did not happen.",
+    urdu: "ماضی کی ایسی فرضی صورتِ حال جو حقیقت میں نہیں ہوئی۔",
+    structure: "If + Past Perfect, would have + V3",
+    possibility: "Imaginary past",
+    examples: [
+      "If I had studied, I would have passed.",
+      "If she had left earlier, she would have arrived on time.",
+      "If we had known, we would have helped.",
+      "If he had called, I would have answered.",
+      "If they had hurried, they would have caught the train."
+    ]
+  },
+  "Mixed": {
+    definition: "A past condition with a present result, or another mixed time relationship.",
+    urdu: "ماضی کی شرط جس کا نتیجہ حال میں ہو، یا مختلف اوقات کا تعلق۔",
+    structure: "If + Past Perfect, would + base verb",
+    possibility: "Imaginary condition with a different-time result",
+    examples: [
+      "If I had slept earlier, I would feel better now.",
+      "If she had studied medicine, she would be a doctor now.",
+      "If we had left earlier, we would be there now.",
+      "If he had saved money, he would own a car now.",
+      "If they had trained more, they would be stronger now."
+    ]
+  }
+};
+
+
+const conversionRules = [
+  {
+    title: "Zero → First Conditional",
+    rule: "If + Present Simple, will + V1",
+    urdu: "عمومی حقیقت کو مستقبل کے ممکنہ نتیجے میں بدلیں۔",
+    examples: [
+      ["If you heat ice, it melts.", "If you heat the ice, it will melt."],
+      ["If water freezes, it becomes ice.", "If the water freezes tonight, it will become ice."],
+      ["If plants get no water, they dry out.", "If these plants get no water tomorrow, they will dry out."]
+    ]
+  },
+  {
+    title: "First → Zero Conditional",
+    rule: "If + Present Simple, Present Simple",
+    urdu: "مستقبل کے امکان کو عمومی حقیقت میں بدلیں، جب بات عام طور پر درست ہو۔",
+    examples: [
+      ["If you heat ice, it will melt.", "If you heat ice, it melts."],
+      ["If water reaches 100°C at sea level, it will boil.", "If water reaches 100°C at sea level, it boils."],
+      ["If plants do not get water, they will dry out.", "If plants do not get water, they dry out."]
+    ]
+  },
+  {
+    title: "Zero → Second Conditional",
+    rule: "If + Past Simple, would + V1",
+    urdu: "عمومی حقیقت کو فرضی صورتِ حال میں بیان کریں؛ معنی بدل سکتا ہے۔",
+    examples: [
+      ["If I have time, I read.", "If I had more time, I would read."],
+      ["If people exercise, they feel healthier.", "If I exercised more, I would feel healthier."],
+      ["If water freezes, it becomes solid.", "If water did not freeze, life would be different."]
+    ]
+  },
+  {
+    title: "Second → Zero Conditional",
+    rule: "If + Present Simple, Present Simple",
+    urdu: "فرضی بات کو عمومی حقیقت میں بدلنے کے لیے ایسا جملہ بنائیں جو حقیقتاً درست ہو۔",
+    examples: [
+      ["If I had more time, I would read.", "If people have time, they can read."],
+      ["If she were taller, she would reach the shelf.", "If people are tall enough, they can reach higher shelves."],
+      ["If I lived near the sea, I would swim often.", "If people live near the sea, they can swim often."]
+    ]
+  },
+  {
+    title: "First → Second Conditional",
+    rule: "If + Past Simple, would + V1",
+    urdu: "حقیقی مستقبل کے امکان کو فرضی یا کم امکان والی صورتِ حال بنائیں۔",
+    examples: [
+      ["If I have time, I will help.", "If I had time, I would help."],
+      ["If she studies, she will pass.", "If she studied, she would pass."],
+      ["If we move nearby, we will visit.", "If we lived nearby, we would visit."]
+    ]
+  },
+  {
+    title: "Second → First Conditional",
+    rule: "If + Present Simple, will + V1",
+    urdu: "فرضی شرط کو مستقبل کے حقیقی امکان میں بدلیں؛ صورتِ حال کو حقیقت کے مطابق تبدیل کرنا ضروری ہے۔",
+    examples: [
+      ["If I had time, I would help.", "If I have time tomorrow, I will help."],
+      ["If she studied, she would pass.", "If she studies, she will pass."],
+      ["If we lived nearby, we would visit.", "If we move nearby, we will visit."]
+    ]
+  },
+  {
+    title: "Zero → Third Conditional",
+    rule: "If + Past Perfect, would have + V3",
+    urdu: "عمومی حقیقت کو ماضی کی فرضی صورتِ حال میں بدلنے کے لیے وقت اور سیاق تبدیل کرنا پڑتا ہے۔",
+    examples: [
+      ["If you heat ice, it melts.", "If I had heated the ice, it would have melted."],
+      ["If plants get no water, they dry out.", "If we had given the plant no water, it would have dried out."],
+      ["If water freezes, it becomes ice.", "If the water had frozen, it would have become ice."]
+    ]
+  },
+  {
+    title: "Third → Zero Conditional",
+    rule: "If + Present Simple, Present Simple",
+    urdu: "ماضی کے ایک واقعے کو عمومی حقیقت میں بدلنے کے لیے جملے کا مطلب دوبارہ بنانا ضروری ہے۔",
+    examples: [
+      ["If I had heated ice, it would have melted.", "If you heat ice, it melts."],
+      ["If the plant had received no water, it would have dried out.", "If plants receive no water, they dry out."],
+      ["If water had frozen, it would have become ice.", "If water freezes, it becomes ice."]
+    ]
+  },
+  {
+    title: "First → Third Conditional",
+    rule: "If + Past Perfect, would have + V3",
+    urdu: "مستقبل کے امکان کو ماضی کی فرضی صورتِ حال میں بدلیں۔",
+    examples: [
+      ["If I study, I will pass.", "If I had studied, I would have passed."],
+      ["If she leaves early, she will arrive on time.", "If she had left early, she would have arrived on time."],
+      ["If we hurry, we will catch the bus.", "If we had hurried, we would have caught the bus."]
+    ]
+  },
+  {
+    title: "Third → First Conditional",
+    rule: "If + Present Simple, will + V1",
+    urdu: "ماضی کی فرضی صورتِ حال کو مستقبل کے نئے امکان میں بدلیں؛ وقت اور معنی بدل جاتے ہیں۔",
+    examples: [
+      ["If I had studied, I would have passed.", "If I study, I will pass."],
+      ["If she had left early, she would have arrived on time.", "If she leaves early, she will arrive on time."],
+      ["If we had hurried, we would have caught the bus.", "If we hurry, we will catch the bus."]
+    ]
+  },
+  {
+    title: "Second → Third Conditional",
+    rule: "If + Past Perfect, would have + V3",
+    urdu: "حال یا مستقبل کی فرضی شرط کو ماضی کی فرضی شرط میں بدلیں۔",
+    examples: [
+      ["If I had more time, I would read.", "If I had had more time yesterday, I would have read."],
+      ["If she knew the answer, she would tell us.", "If she had known the answer, she would have told us."],
+      ["If he were there, he would help.", "If he had been there, he would have helped."]
+    ]
+  },
+  {
+    title: "Third → Second Conditional",
+    rule: "If + Past Simple, would + V1",
+    urdu: "ماضی کی فرضی شرط کو حال یا مستقبل کی فرضی صورتِ حال میں بدلیں۔",
+    examples: [
+      ["If I had studied, I would have passed.", "If I studied more, I would pass."],
+      ["If she had known, she would have helped.", "If she knew, she would help."],
+      ["If he had been there, he would have helped.", "If he were here, he would help."]
+    ]
+  },
+  {
+    title: "First → Mixed Conditional",
+    rule: "If + Past Perfect, would + V1",
+    urdu: "ماضی کی شرط کا نتیجہ حال میں بیان کریں؛ وقت اور معنی تبدیل ہوتے ہیں۔",
+    examples: [
+      ["If I study hard, I will pass.", "If I had studied hard, I would be successful now."],
+      ["If she saves money, she will buy a car.", "If she had saved money, she would own a car now."],
+      ["If he trains, he will become stronger.", "If he had trained more, he would be stronger now."]
+    ]
+  },
+  {
+    title: "Mixed → Third Conditional",
+    rule: "If + Past Perfect, would have + V3",
+    urdu: "حال کے نتیجے والے Mixed Conditional کو ماضی کے نتیجے والے Third Conditional میں بدلیں۔",
+    examples: [
+      ["If I had studied medicine, I would be a doctor now.", "If I had studied medicine, I would have become a doctor."],
+      ["If he had saved money, he would own a car now.", "If he had saved money, he would have bought a car."],
+      ["If we had left earlier, we would be there now.", "If we had left earlier, we would have arrived on time."]
+    ]
+  },
+  {
+    title: "Third → Mixed Conditional",
+    rule: "If + Past Perfect, would + V1",
+    urdu: "ماضی کے نتیجے کو حال کے نتیجے میں تبدیل کریں۔",
+    examples: [
+      ["If I had studied, I would have passed.", "If I had studied, I would have a better job now."],
+      ["If she had saved money, she would have bought a car.", "If she had saved money, she would own a car now."],
+      ["If he had trained more, he would have won.", "If he had trained more, he would be fitter now."]
+    ]
+  },
+  {
+    title: "Zero → Mixed Conditional",
+    rule: "If + Past Perfect, would + V1",
+    urdu: "عمومی حقیقت سے ماضی کی فرضی شرط اور حال کے نتیجے والا جملہ بنائیں؛ یہ براہِ راست تبدیلی نہیں ہے۔",
+    examples: [
+      ["If people exercise, they feel healthier.", "If I had exercised regularly, I would feel healthier now."],
+      ["If plants get water, they grow.", "If I had watered the plant, it would be healthier now."],
+      ["If people save money, they have savings.", "If I had saved money, I would have savings now."]
+    ]
+  },
+  {
+    title: "Mixed → Zero Conditional",
+    rule: "If + Present Simple, Present Simple",
+    urdu: "ماضی کی فرضی شرط کو عمومی حقیقت میں بدلنے کے لیے ایک نئی عمومی بات بنائیں۔",
+    examples: [
+      ["If I had slept earlier, I would feel better now.", "If people sleep enough, they feel better."],
+      ["If she had studied medicine, she would be a doctor now.", "If people study medicine and qualify, they can become doctors."],
+      ["If he had saved money, he would own a car now.", "If people save enough money, they can buy a car."]
+    ]
+  },
+  {
+    title: "Mixed → First Conditional",
+    rule: "If + Present Simple, will + V1",
+    urdu: "ماضی کی شرط والے جملے کو مستقبل کے ایک نئے حقیقی امکان میں بدلیں۔",
+    examples: [
+      ["If I had studied, I would have more options now.", "If I study this year, I will have more options."],
+      ["If she had saved money, she would own a car now.", "If she saves money, she will buy a car."],
+      ["If we had left early, we would be there now.", "If we leave early tomorrow, we will arrive on time."]
+    ]
+  }
+];
+
+function renderConversionRules() {
+  return `
+    <section class="card">
+      <h2>Conditional Sentences: Conversion Rules</h2>
+      <p>Har rule ke saath English aur Urdu explanation aur 3 examples dekhein.</p>
+      <p class="urdu">ہر قاعدے کے ساتھ انگریزی اور اردو وضاحت اور تین مثالیں موجود ہیں۔</p>
+      ${conversionRules.map(rule => `
+        <div class="card">
+          <h3>${escapeHTML(rule.title)}</h3>
+          <div class="formula">${escapeHTML(rule.rule)}</div>
+          <p class="urdu">${escapeHTML(rule.urdu)}</p>
+          <ol class="example-list">
+            ${rule.examples.map(pair => `
+              <li>
+                <p><b>Original:</b> ${escapeHTML(pair[0])}</p>
+                <p><b>Converted:</b> ${escapeHTML(pair[1])}</p>
+              </li>
+            `).join("")}
+          </ol>
+        </div>
+      `).join("")}
+      <button class="secondary" onclick="showConditionals()">← Back to Conditional Sentences</button>
+    </section>
+  `;
+}
+
+function showConversionRules() {
+  currentPage = "conversionRules";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function showConditionals() {
+  currentPage = "conditionals";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderConditionals() {
+  const item = conditionalData[conditionType] || conditionalData.Zero;
+
+  return `
+    <section class="card">
+      <h2>Conditional Sentences</h2>
+      <p>Choose a type to learn its meaning, structure and examples.</p>
+      <button onclick="showConversionRules()">Conversion Rules</button>
+      <div class="grid">
+        ${Object.keys(conditionalData).map(type => `
+          <button class="${type === conditionType ? "" : "secondary"}"
+            onclick="chooseCondition('${type}')">${type} Conditional</button>
+        `).join("")}
+      </div>
+    </section>
+    <section class="card">
+      <h2>${escapeHTML(conditionType)} Conditional</h2>
+      <h3>Definition</h3>
+      <p>${escapeHTML(item.definition)}</p>
+      <p class="urdu">${escapeHTML(item.urdu)}</p>
+      <h3>Structure</h3>
+      <div class="formula">${escapeHTML(item.structure)}</div>
+      <h3>Possibility / Use</h3>
+      <p>${escapeHTML(item.possibility)}</p>
+      <h3>Five Examples</h3>
+      <ol class="example-list">
+        ${item.examples.map(e => `<li>${escapeHTML(e)}</li>`).join("")}
+      </ol>
+    </section>
+    <section class="card">
+      <h3>Conversion Rule</h3>
+      <p>In many conditional sentences, the clause beginning with “if” gives the condition, and the other clause gives the result.</p>
+      <p class="urdu">عام طور پر “If” والا حصہ شرط بتاتا ہے اور دوسرا حصہ اس کا نتیجہ بتاتا ہے۔</p>
+      <p><b>Example:</b> If you study, you will improve.</p>
+      <p><b>Negative:</b> If you do not study, you may not improve.</p>
+      <p><b>Question:</b> What will happen if you study?</p>
+    </section>
+    <button class="secondary" onclick="goHome()">← Home</button>
+  `;
+}
+
+function chooseCondition(type) {
+  if (!conditionalData[type]) return;
+  conditionType = type;
+  renderApp();
+}
+
+function showIdentifier() {
+  currentPage = "identifier";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderIdentifier() {
+  return `
+    <section class="card">
+      <h2>Tense Identifier</h2>
+      <p>Enter an English sentence to check for a supported tense pattern.</p>
+      <label for="identifierInput">Your sentence</label>
+      <textarea id="identifierInput" rows="3"
+        placeholder="Example: She is reading a book."></textarea>
+      <button onclick="identifySentence()">Identify Tense</button>
+      <div id="identifierResult" class="formula" style="margin-top:12px">
+        Result will appear here.
+      </div>
+      <p class="notice">This is a basic pattern identifier. It does not identify every English tense or every possible sentence.</p>
+    </section>
+  `;
+}
+
+function identifySentence() {
+  const input = document.getElementById("identifierInput");
+  const result = document.getElementById("identifierResult");
+  if (!input || !result) return;
+
+  const s = input.value.trim().toLowerCase();
+  if (!s) {
+    result.textContent = "Please enter a sentence first.";
+    return;
+  }
+
+  const patterns = [
+    [/^(am|is|are)\s+\w+ing\b/, "Present Continuous (question pattern)"],
+    [/\b(am|is|are)\s+\w+ing\b/, "Present Continuous"],
+    [/\b(has|have)\s+been\s+\w+ing\b/, "Present Perfect Continuous"],
+    [/\b(had)\s+been\s+\w+ing\b/, "Past Perfect Continuous"],
+    [/\b(will)\s+have\s+been\s+\w+ing\b/, "Future Perfect Continuous"],
+    [/\b(will)\s+have\s+\w+ed\b/, "Possible Future Perfect"],
+    [/\b(will)\s+be\s+\w+ing\b/, "Future Continuous"],
+    [/\b(will)\s+\w+\b/, "Possible Future Simple"],
+    [/\b(had)\s+\w+ed\b/, "Possible Past Perfect"],
+    [/\b(has|have)\s+\w+ed\b/, "Possible Present Perfect"],
+    [/\b(was|were)\s+\w+ing\b/, "Past Continuous"],
+    [/\b(do|does)\s+not\b|\b(don't|doesn't)\b/, "Possible Present Simple negative"],
+    [/\b(did)\s+not\b|\bdidn't\b/, "Possible Past Simple negative"],
+    [/\b(is|am|are)\b/, "Possible Present Simple or another present pattern"],
+    [/\b(yesterday|last night|last week|ago)\b/, "Possible Past Simple (check the verb form)"]
+  ];
+
+  const found = patterns.find(([regex]) => regex.test(s));
+  result.textContent = found
+    ? "Possible tense: " + found[1] + ". Please check the sentence structure."
+    : "This example does not match a supported pattern. This basic identifier cannot recognize every tense.";
+}
+
+function shuffleArray(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function startTenseQuiz() {
+  const t = tenseData[selectedTenseIndex];
+  if (!t) return;
+
+  const otherTenses = tenseData.filter((_, i) => i !== selectedTenseIndex);
+
+  const bank = [
+    {
+      question: "Which tense is being studied?",
+      correct: t.name,
+      options: [t.name, ...shuffleArray(otherTenses).slice(0, 3).map(x => x.name)]
+    },
+    {
+      question: "Which helping verb information belongs to this tense?",
+      correct: t.help,
+      options: [t.help, "Only did", "Only will", "Only has"]
+    },
+    {
+      question: "Which is the positive structure?",
+      correct: t.forms.positive,
+      options: [
+        t.forms.positive,
+        t.forms.negative,
+        t.forms.question,
+        "Subject + did + verb-ing"
+      ]
+    },
+    {
+      question: "Which sentence form asks a question?",
+      correct: "Interrogative",
+      options: ["Positive", "Negative", "Interrogative", "Imperative"]
+    },
+    {
+      question: "What should you check when choosing a verb form?",
+      correct: "The tense structure and subject",
+      options: [
+        "The tense structure and subject",
+        "Only the length of the sentence",
+        "Always use verb + ing",
+        "Always use V2"
+      ]
+    }
+  ];
+
+  quizQuestions = bank.map(q => {
+    const options = shuffleArray([...new Set(q.options)]);
+    return {
+      question: q.question,
+      options,
+      answer: options.indexOf(q.correct)
+    };
+  });
+
+  quizIndex = 0;
+  quizScore = 0;
+  quizAnswered = false;
+  currentPage = "quiz";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderQuiz() {
+  if (quizIndex >= quizQuestions.length) {
+    currentPage = "quizResult";
+    return renderQuizResult();
+  }
+
+  const q = quizQuestions[quizIndex];
+  return `
+    <section class="card">
+      <button class="secondary" onclick="cancelQuiz()">Exit Quiz</button>
+      <h2>${escapeHTML(tenseData[selectedTenseIndex].name)} Quiz</h2>
+      <p>Question ${quizIndex + 1} of ${quizQuestions.length}</p>
+      <h3>${escapeHTML(q.question)}</h3>
+      <div class="grid">
+        ${q.options.map((option, i) => `
+          <button class="lesson-button"
+            ${quizAnswered ? "disabled" : ""}
+            onclick="submitQuizAnswer(${i})">
+            ${escapeHTML(option)}
+          </button>
+        `).join("")}
+      </div>
+      ${quizAnswered ? `
+        <p class="formula">
+          ${q.chosen === q.answer
+            ? "Correct! Well done."
+            : "Correct answer: " + escapeHTML(q.options[q.answer])}
+        </p>
+        <button onclick="nextQuizQuestion()">
+          ${quizIndex === quizQuestions.length - 1 ? "View Results" : "Next Question"}
+        </button>
+      ` : ""}
+    </section>
+  `;
+}
+
+function submitQuizAnswer(choice) {
+  if (quizAnswered) return;
+
+  const q = quizQuestions[quizIndex];
+  if (!q || choice < 0 || choice >= q.options.length) return;
+
+  q.chosen = choice;
+  quizAnswered = true;
+
+  if (choice === q.answer) {
+    quizScore++;
+  } else {
+    mistakeReview.push({
+      topic: tenseData[selectedTenseIndex].name,
+      question: q.question,
+      chosen: q.options[choice],
+      correct: q.options[q.answer]
+    });
+  }
+
+  renderApp();
+}
+
+function nextQuizQuestion() {
+  if (!quizAnswered) {
+    alert("Please select an answer first.");
+    return;
+  }
+
+  quizIndex++;
+  quizAnswered = false;
+
+  if (quizIndex >= quizQuestions.length) {
+    currentPage = "quizResult";
+  }
+
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderQuizResult() {
+  const total = quizQuestions.length;
+  const percentage = total ? Math.round((quizScore / total) * 100) : 0;
+
+  let grade = "Need Improvement";
+  if (quizScore === total) grade = "Excellent";
+  else if (percentage >= 80) grade = "Very Good";
+  else if (percentage >= 60) grade = "Good";
+  else if (percentage >= 40) grade = "Keep Practising";
+
+  return `
+    <section class="card">
+      <h2>Quiz Result</h2>
+      <p>Score: <b>${quizScore} / ${total}</b></p>
+      <p>Percentage: <b>${percentage}%</b></p>
+      <p>Remarks: <b>${grade}</b></p>
+      <button onclick="startTenseQuiz()">Try Again</button>
+      <button class="secondary" onclick="openTense(${selectedTenseIndex})">Back to Lesson</button>
+      <button class="secondary" onclick="showTenses()">All Tenses</button>
+    </section>
+  `;
+}
+
+function cancelQuiz() {
+  if (confirm("Exit this quiz and return to the lesson?")) {
+    currentPage = "lesson";
+    renderApp();
+  }
+}
+
+/* PART 5 ENDS HERE. DO NOT CLOSE THE SCRIPT YET. */
+
+/* ========== PART 6: GRAND TEST ========== */
+
+let grandQuestions = [];
+let grandIndex = 0;
+let grandScore = 0;
+let grandAnswered = false;
+let grandActive = false;
+
+function buildGrandBank() {
+  const bank = [];
+
+  tenseData.forEach((t, index) => {
+    const otherNames = shuffleArray(
+      tenseData.filter(x => x.name !== t.name).map(x => x.name)
+    ).slice(0, 3);
+
+    const otherHelps = shuffleArray(
+      tenseData.filter(x => x.name !== t.name).map(x => x.help)
+    ).slice(0, 3);
+
+    const otherVerbs = shuffleArray(
+      tenseData.filter(x => x.name !== t.name).map(x => x.verb)
+    ).slice(0, 3);
+
+    bank.push({
+      topic: t.name,
+      question: "Which tense is described here? " + t.use,
+      options: shuffleArray([t.name, ...otherNames]),
+      correct: t.name
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Choose the correct positive structure for " + t.name + ".",
+      options: shuffleArray([
+        t.forms.positive,
+        t.forms.negative,
+        t.forms.question,
+        tenseData[(index + 1) % tenseData.length].forms.positive
+      ]),
+      correct: t.forms.positive
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which helping-verb information matches " + t.name + "?",
+      options: shuffleArray([t.help, ...otherHelps]),
+      correct: t.help
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which verb-form information matches " + t.name + "?",
+      options: shuffleArray([t.verb, ...otherVerbs]),
+      correct: t.verb
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Choose a positive example of " + t.name + ".",
+      options: shuffleArray([
+        t.examples[0][0],
+        t.examples[1][1],
+        t.examples[2][2],
+        tenseData[(index + 1) % tenseData.length].examples[0][0]
+      ]),
+      correct: t.examples[0][0]
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which is the negative structure for " + t.name + "?",
+      options: shuffleArray([
+        t.forms.negative,
+        t.forms.positive,
+        t.forms.question,
+        tenseData[(index + 1) % tenseData.length].forms.negative
+      ]),
+      correct: t.forms.negative
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which is the interrogative structure for " + t.name + "?",
+      options: shuffleArray([
+        t.forms.question,
+        t.forms.positive,
+        t.forms.negative,
+        tenseData[(index + 1) % tenseData.length].forms.question
+      ]),
+      correct: t.forms.question
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which sentence is an example of " + t.name + "?",
+      options: shuffleArray([
+        t.examples[2][0],
+        t.examples[0][1],
+        t.examples[1][2],
+        tenseData[(index + 1) % tenseData.length].examples[2][0]
+      ]),
+      correct: t.examples[2][0]
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which sentence is negative in " + t.name + "?",
+      options: shuffleArray([
+        t.examples[0][1],
+        t.examples[0][0],
+        t.examples[0][2],
+        tenseData[(index + 1) % tenseData.length].examples[0][1]
+      ]),
+      correct: t.examples[0][1]
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which sentence is interrogative in " + t.name + "?",
+      options: shuffleArray([
+        t.examples[0][2],
+        t.examples[0][0],
+        t.examples[0][1],
+        tenseData[(index + 1) % tenseData.length].examples[0][2]
+      ]),
+      correct: t.examples[0][2]
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which Urdu explanation matches " + t.name + "?",
+      options: shuffleArray([
+        t.urdu,
+        tenseData[(index + 1) % tenseData.length].urdu,
+        tenseData[(index + 2) % tenseData.length].urdu,
+        tenseData[(index + 3) % tenseData.length].urdu
+      ]),
+      correct: t.urdu
+    });
+
+    bank.push({
+      topic: t.name,
+      question: "Which tense has this helping-verb information: " + t.help + "?",
+      options: shuffleArray([t.name, ...otherNames]),
+      correct: t.name
+    });
+  });
+
+  // Add six more questions to make a 150-question bank.
+  for (let i = 0; i < 6; i++) {
+    const t = tenseData[i];
+    const otherNames = shuffleArray(
+      tenseData.filter(x => x.name !== t.name).map(x => x.name)
+    ).slice(0, 3);
+
+    bank.push({
+      topic: t.name,
+      question: "Identify the tense from this sentence: " + t.examples[4][0],
+      options: shuffleArray([t.name, ...otherNames]),
+      correct: t.name
+    });
+  }
+
+  return bank;
+}
+
+function showGrandTest() {
+  currentPage = "grandIntro";
+  grandActive = false;
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function beginGrandTest() {
+  grandQuestions = shuffleArray(buildGrandBank()).slice(0, 25).map(q => {
+    const options = [...q.options];
+    return {
+      ...q,
+      options,
+      answer: options.indexOf(q.correct),
+      chosen: null
+    };
+  });
+
+  grandIndex = 0;
+  grandScore = 0;
+  grandAnswered = false;
+  grandActive = true;
+  currentPage = "grandTest";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderGrandIntro() {
+  return `
+    <section class="card">
+      <h2>Grand Test</h2>
+      <p>Test your knowledge of all 12 English tenses.</p>
+      <ul>
+        <li>25 multiple-choice questions per attempt.</li>
+        <li>Questions are selected from a generated 150-question bank.</li>
+        <li>Your score, percentage, grade and improvement topics appear at the end.</li>
+      </ul>
+      <p class="notice">When the test begins, learning pages are locked until you submit or exit the test.</p>
+      <button onclick="beginGrandTest()">Start Grand Test</button>
+    </section>
+  `;
+}
+
+function renderGrandTest() {
+  if (!grandQuestions.length) {
+    return `<section class="card"><p>No questions loaded.</p><button onclick="showGrandTest()">Back</button></section>`;
+  }
+
+  const q = grandQuestions[grandIndex];
+
+  return `
+    <section class="card">
+      <h2>Grand Test</h2>
+      <p>Question ${grandIndex + 1} of ${grandQuestions.length}</p>
+      <div class="formula">${escapeHTML(q.question)}</div>
+      <div class="grid">
+        ${q.options.map((option, i) => `
+          <button class="lesson-button"
+            ${grandAnswered ? "disabled" : ""}
+            onclick="answerGrand(${i})">${escapeHTML(option)}</button>
+        `).join("")}
+      </div>
+      ${grandAnswered ? `
+        <p class="formula">
+          ${q.chosen === q.answer
+            ? "Correct!"
+            : "Correct answer: " + escapeHTML(q.options[q.answer])}
+        </p>
+        <button onclick="nextGrandQuestion()">
+          ${grandIndex === grandQuestions.length - 1 ? "Finish Test" : "Next Question"}
+        </button>
+      ` : ""}
+      <button class="secondary" onclick="cancelGrandTest()">Exit Test</button>
+    </section>
+  `;
+}
+
+function answerGrand(choice) {
+  if (grandAnswered) return;
+
+  const q = grandQuestions[grandIndex];
+  if (!q || choice < 0 || choice >= q.options.length) return;
+
+  q.chosen = choice;
+  grandAnswered = true;
+
+  if (choice === q.answer) {
+    grandScore++;
+  } else {
+    mistakeReview.push({
+      topic: q.topic,
+      question: q.question,
+      chosen: q.options[choice],
+      correct: q.options[q.answer]
+    });
+  }
+
+  renderApp();
+}
+
+function nextGrandQuestion() {
+  if (!grandAnswered) {
+    alert("Choose an answer first.");
+    return;
+  }
+
+  grandIndex++;
+  grandAnswered = false;
+
+  if (grandIndex >= grandQuestions.length) {
+    currentPage = "grandResult";
+    grandActive = false;
+  }
+
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function cancelGrandTest() {
+  if (!confirm("Exit this test? Your current attempt will end.")) return;
+
+  grandActive = false;
+  grandQuestions = [];
+  currentPage = "home";
+  renderApp();
+}
+
+function renderGrandResult() {
+  const total = grandQuestions.length;
+  const percentage = total ? Math.round(grandScore / total * 100) : 0;
+  let grade;
+
+  if (grandScore >= 23) grade = "A+";
+  else if (grandScore >= 21) grade = "A";
+  else if (grandScore >= 16) grade = "B";
+  else if (grandScore >= 12) grade = "C";
+  else grade = "Fail / Need Improvement";
+
+  const weak = {};
+  grandQuestions.forEach(q => {
+    if (q.chosen !== q.answer) {
+      weak[q.topic] = (weak[q.topic] || 0) + 1;
+    }
+  });
+
+  const weakList = Object.keys(weak);
+  const reviewHTML = grandQuestions.map((q, i) => `
+    <li>
+      <b>${i + 1}. ${escapeHTML(q.question)}</b><br>
+      Your answer: ${q.chosen === null ? "Not answered" : escapeHTML(q.options[q.chosen])}<br>
+      Correct answer: ${escapeHTML(q.options[q.answer])}
+    </li>
+  `).join("");
+
+  return `
+    <section class="card">
+      <h2>Grand Test Result</h2>
+      <p>Score: <b>${grandScore} / ${total}</b></p>
+      <p>Percentage: <b>${percentage}%</b></p>
+      <p>Grade: <b>${grade}</b></p>
+      <h3>Improvement Needed</h3>
+      ${weakList.length
+        ? `<ul>${weakList.map(name => `<li>${escapeHTML(name)}: ${weak[name]} mistake(s). Review this lesson.</li>`).join("")}</ul>`
+        : "<p>Excellent! No incorrect answers.</p>"}
+      <button onclick="beginGrandTest()">New Random Test</button>
+      <button class="secondary" onclick="showTenses()">Review Lessons</button>
+    </section>
+    <section class="card">
+      <h3>Answer Review</h3>
+      <ol>${reviewHTML}</ol>
+    </section>
+  `;
+}
+
+/* ========== PART 7: TENSE WRITING TEST ========== */
+
+let writingQuestions = [];
+let writingAnswers = {};
+let writingSubmitted = false;
+
+function buildWritingBank() {
+  const contexts = [
+    "Write an example about school.",
+    "Write an example about your family.",
+    "Write an example about reading a book.",
+    "Write an example about playing a game.",
+    "Write an example about learning English.",
+    "Write an example about doing homework.",
+    "Write an example about helping someone.",
+    "Write an example about travelling.",
+    "Write an example about cooking food.",
+    "Write an example about your daily routine.",
+    "Write an example about a teacher.",
+    "Write an example about a friend.",
+    "Write an example about a rainy day."
+  ];
+
+  const bank = [];
+
+  tenseData.forEach(t => {
+    contexts.forEach(context => {
+      bank.push({
+        tense: t.name,
+        prompt: "Write one original sentence in " + t.name + ". " + context
+      });
+    });
+  });
+
+  // 12 × 13 = 156 prompts; use exactly 150.
+  return bank.slice(0, 150);
+}
+
+function showWritingTest() {
+  currentPage = "writingIntro";
+  writingSubmitted = false;
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function beginWritingTest() {
+  writingQuestions = shuffleArray(buildWritingBank()).slice(0, 15);
+  writingAnswers = {};
+  writingSubmitted = false;
+  currentPage = "writingTest";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderWritingIntro() {
+  return `
+    <section class="card">
+      <h2>Tense Writing Test</h2>
+      <p>You will receive 15 prompts. Write one original sentence for each named tense.</p>
+      <p>Prompts are selected from a 150-prompt bank.</p>
+      <p class="urdu">ہر سوال میں دیے گئے ٹینس کے مطابق اپنا ایک جملہ لکھیں۔</p>
+      <p class="notice">This basic offline test can check whether an answer is entered, but it cannot reliably judge every English sentence's grammar automatically. You should review your answers against the lesson examples.</p>
+      <button onclick="beginWritingTest()">Start Writing Test</button>
+    </section>
+  `;
+}
+
+function renderWritingTest() {
+  return `
+    <section class="card">
+      <h2>Tense Writing Test</h2>
+      <p>Write one complete sentence for each prompt.</p>
+      <p class="notice">Learning pages are locked while this test is open. Submit when finished.</p>
+    </section>
+    ${writingQuestions.map((q, i) => `
+      <section class="card">
+        <h3>Question ${i + 1}</h3>
+        <p><b>Tense:</b> ${escapeHTML(q.tense)}</p>
+        <p>${escapeHTML(q.prompt)}</p>
+        <label for="writing${i}">Your sentence</label>
+        <textarea id="writing${i}" rows="2"
+          placeholder="Write your own sentence here..."
+          oninput="saveWritingAnswer(${i}, this.value)">${escapeHTML(writingAnswers[i] || "")}</textarea>
+      </section>
+    `).join("")}
+    <section class="card">
+      <button onclick="submitWritingTest()">Submit Writing Test</button>
+      <button class="secondary" onclick="cancelWritingTest()">Cancel Test</button>
+    </section>
+  `;
+}
+
+function saveWritingAnswer(index, value) {
+  writingAnswers[index] = String(value || "");
+}
+
+function submitWritingTest() {
+  if (!confirm("Submit your writing test now?")) return;
+
+  writingSubmitted = true;
+  currentPage = "writingResult";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderWritingResult() {
+  const total = writingQuestions.length;
+  const completed = writingQuestions.filter((q, i) =>
+    String(writingAnswers[i] || "").trim().length > 0
+  ).length;
+
+  let grade;
+  if (completed >= 14) grade = "A+";
+  else if (completed >= 11) grade = "A";
+  else if (completed >= 9) grade = "B";
+  else if (completed >= 6) grade = "C";
+  else if (completed === 5) grade = "D";
+  else grade = "F";
+
+  const percentage = total ? Math.round(completed / total * 100) : 0;
+
+  return `
+    <section class="card">
+      <h2>Writing Test Submitted</h2>
+      <p>Completed answers: <b>${completed} / ${total}</b></p>
+      <p>Completion percentage: <b>${percentage}%</b></p>
+      <p>Completion-based grade: <b>${grade}</b></p>
+      <p class="notice">This grade counts filled answers only; it does not confirm grammatical correctness. Review each sentence carefully.</p>
+      <button onclick="reviewWritingAnswers()">Review My Answers</button>
+      <button class="secondary" onclick="beginWritingTest()">Try a New Test</button>
+      <button class="secondary" onclick="goHome()">Home</button>
+    </section>
+  `;
+}
+
+function reviewWritingAnswers() {
+  currentPage = "writingReview";
+  renderApp();
+}
+
+function renderWritingReview() {
+  return `
+    <section class="card">
+      <h2>Writing Answer Review</h2>
+      ${writingQuestions.map((q, i) => `
+        <div class="formula" style="margin:10px 0">
+          <b>${i + 1}. ${escapeHTML(q.tense)}</b>
+          <p>${escapeHTML(q.prompt)}</p>
+          <p>Your answer: ${escapeHTML(writingAnswers[i] || "No answer entered.")}</p>
+        </div>
+      `).join("")}
+      <button onclick="showTenses()">Review Lessons</button>
+      <button class="secondary" onclick="goHome()">Home</button>
+    </section>
+  `;
+}
+
+function cancelWritingTest() {
+  if (!confirm("Cancel this writing test? Your current answers will be discarded.")) return;
+
+  writingAnswers = {};
+  writingQuestions = [];
+  writingSubmitted = false;
+  currentPage = "home";
+  renderApp();
+}
+
+/* ========== PART 8: MISTAKE REVIEW ========== */
+
+function showMistakes() {
+  currentPage = "mistakes";
+  renderApp();
+  window.scrollTo(0, 0);
+}
+
+function renderMistakes() {
+  if (!mistakeReview.length) {
+    return `
+      <section class="card">
+        <h2>Mistake Review</h2>
+        <p>No recorded mistakes yet. Complete a quiz or test to collect mistakes here.</p>
+        <button onclick="showTenses()">Practise Tenses</button>
+        <button class="secondary" onclick="showGrandTest()">Grand Test</button>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="card">
+      <h2>Mistake Review</h2>
+      <p>Review the questions you answered incorrectly.</p>
+      ${mistakeReview.map((m, i) => `
+        <div class="formula" style="margin:12px 0">
+          <b>${i + 1}. ${escapeHTML(m.topic)}</b>
+          <p>${escapeHTML(m.question)}</p>
+          <p>Your answer: ${escapeHTML(m.chosen)}</p>
+          <p>Correct answer: <b>${escapeHTML(m.correct)}</b></p>
+        </div>
+      `).join("")}
+      <button onclick="showGrandTest()">Practise Again</button>
+      <button class="secondary" onclick="clearMistakes()">Clear Review</button>
+    </section>
+  `;
+}
+
+function clearMistakes() {
+  if (!confirm("Clear all saved mistakes from this session?")) return;
+  mistakeReview = [];
+  renderApp();
+}
+
+/* Prevent navigation away from an active Grand Test or Writing Test. */
+function enforceTestLock() {
+  if (grandActive && currentPage !== "grandTest") {
+    currentPage = "grandTest";
+  }
+
+  if (
+    writingQuestions.length > 0 &&
+    !writingSubmitted &&
+    currentPage !== "writingTest"
+  ) {
+    currentPage = "writingTest";
+  }
+}
+
+/* ========== PART 9: MAIN RENDERER ========== */
+
+function renderApp() {
+  if (!app) {
+    console.error("Main app container was not found.");
+    return;
+  }
+
+  enforceTestLock();
+
+  let html = "";
+
+  switch (currentPage) {
+    case "home":
+      html = renderHome();
+      break;
+
+    case "tenses":
+      html = renderTenses();
+      break;
+
+    case "lesson":
+      html = renderLesson();
+      break;
+
+    case "conditionals":
+      html = renderConditionals();
+      break;
+
+case "conversionRules":
+  html = renderConversionRules();
+  break;
+    case "identifier":
+      html = renderIdentifier();
+      break;
+
+    case "quiz":
+      html = renderQuiz();
+      break;
+
+    case "quizResult":
+      html = renderQuizResult();
+      break;
+
+    case "grandIntro":
+      html = renderGrandIntro();
+      break;
+
+    case "grandTest":
+      html = renderGrandTest();
+      break;
+
+    case "grandResult":
+      html = renderGrandResult();
+      break;
+
+    case "writingIntro":
+      html = renderWritingIntro();
+      break;
+
+    case "writingTest":
+      html = renderWritingTest();
+      break;
+
+    case "writingResult":
+      html = renderWritingResult();
+      break;
+
+    case "writingReview":
+      html = renderWritingReview();
+      break;
+
+    case "mistakes":
+      html = renderMistakes();
+      break;
+
+    default:
+      currentPage = "home";
+      html = renderHome();j
+  }
+
+  app.innerHTML = html;
+}
+
+/* ========== PART 10: START WEBSITE ========== */
+
+currentPage = "home";
+searchText = "";
+selectedTenseIndex = 0;
+
+renderApp();
+
+</script>
+</body>
+</html>
+
+
